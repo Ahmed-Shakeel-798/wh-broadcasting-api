@@ -27,8 +27,8 @@ app.post('/createUser', async (req, res) => {
         res.set("id", `${driverId}`);
         res.status(200).send({ result: "success" });
     } catch (error) {
-        console.log(e);
-        res.status(500).send({ Error: "Server error!" });
+        console.log(error.message);
+        res.status(500).send({ status: "Failed!", error: error.message });
     }
 });
 
@@ -54,9 +54,9 @@ app.get('/initialize', async (req, res) => {
         );
 
 
-    } catch (e) {
-        console.log(e);
-        res.status(500).send({ Error: "Something went wrong!" });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).send({ status: "Failed!", error: error.message });
     }
 })
 
@@ -66,7 +66,10 @@ app.post('/sendMessageTextOnly/:id', async (req, res) => {
         var id = req.params.id;
         const user = fetchUser(id);
         if (!user) {
-            return res.status(500).send({ Error: "No such user" });
+            throw new Error("no such user, please create a new user");
+        }
+        if (!user.isAssigned) {
+            throw new Error("session offline, please initialize ");
         }
         let driver = user.driver;
 
@@ -79,8 +82,8 @@ app.post('/sendMessageTextOnly/:id', async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error)
-        res.status(500).send({ Error: "Can't send message!" });
+        console.log(error.message)
+        res.status(500).send({ status: "Failed!", error: error.message });
     }
 });
 
@@ -89,8 +92,8 @@ app.delete('/closeSession', (req, res) => {
         deleteDriver(req.query.id);
         res.status(200).send({ result: "driver deleted" });
     } catch (error) {
-        console.log(error);
-        res.status(500).send({ Error: "Can't send message!" });
+        console.log(error.message);
+        res.status(500).send({ status: "Failed!", error: error.message });
     }
 });
 

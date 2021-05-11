@@ -58,7 +58,7 @@ let createNewUser = () => {
 let fetchUser = (id) => {
     for (let i = 0; i < users.length; i++) {
         if (users[i].getId() == id) {
-            console.log("found ----------------------");
+            // console.log("found ----------------------");
             return users[i];
         }
     }
@@ -73,11 +73,16 @@ let assignDriver = (id, driver) => {
 }
 
 let deleteDriver = (id) => {
-    for (let i = 0; i < users.length; i++) {
-        if (users[i].getId() == id) {
-            users[i].deleteDriver();
-        }
+
+    const user = fetchUser(parseInt(id));
+    if (!user) {
+        throw new Error("user not found, please create a new user");
     }
+    if (!user.isAssigned) {
+        throw new Error("session does not exist, please initialize")
+    }
+    user.deleteDriver();
+
 }
 
 let getAllUsers = () => {
