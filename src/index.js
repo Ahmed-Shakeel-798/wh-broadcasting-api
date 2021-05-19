@@ -5,7 +5,8 @@ const path = require("path")
 
 const { openWhatsappWeb } = require('./whatsapp-web/initialize');
 const { sendMessage, sendMessageByNumber } = require('./whatsapp-web/sendmessage');
-const { createNewUser, fetchUser, deleteDriver } = require('./db');
+const { checkStatus } = require('./whatsapp-web/check_status');
+const { createNewUser, fetchUser, deleteDriver, deleteUser } = require('./db');
 const { fillArray, popMessage, getCurrentMessagesArray } = require('./messages-queue');
 
 const app = express();
@@ -34,6 +35,14 @@ app.post('/createUser', async (req, res) => {
 
 app.get('/initialize', async (req, res) => {
     try {
+        var id = req.query.id;
+        const user = fetchUser(id);
+        if (!user) {
+            throw new Error("no such user, please create a new user");
+        }
+        if (user.isAssigned) {
+            deleteDriver(req.query.id);
+        }
         await openWhatsappWeb(req.query.id).then(
             (outputObj) => {
                 driverId = outputObj.driverId;
@@ -60,6 +69,31 @@ app.get('/initialize', async (req, res) => {
     }
 })
 
+app.get('/check_status', async (req, res) => {
+    try {
+        var id = req.query.id;
+        const user = fetchUser(id);
+        if (!user) {
+            throw new Error("no such user, please create a new user");
+        }
+        if (!user.isAssigned) {
+            throw new Error("session offline, please initialize ");
+        }
+        let driver = user.driver;
+        await checkStatus(driver).then((result) => {
+            if (result.isActive) {
+                res.status(200).send({ result: "success", message: "active" });
+            } else {
+                res.status(200).send({ result: "success", message: "not_active" });
+            }
+        });
+
+
+    } catch (error) {
+        console.log(error.message)
+        res.status(500).send({ status: "Failed!", error: error.message });
+    }
+});
 
 app.post('/sendMessageTextOnly/:id', async (req, res) => {
     try {
@@ -87,16 +121,37 @@ app.post('/sendMessageTextOnly/:id', async (req, res) => {
     }
 });
 
-app.delete('/closeSession', (req, res) => {
+app.delete('/logout', (req, res) => {
     try {
         deleteDriver(req.query.id);
-        res.status(200).send({ result: "driver deleted" });
+        res.status(200).send({ result: "logged out" });
     } catch (error) {
         console.log(error.message);
         res.status(500).send({ status: "Failed!", error: error.message });
     }
 });
 
+app.delete('/delete_user', (req, res) => {
+    try {
+        var id = req.query.id;
+        const user = fetchUser(id);
+        if (!user) {
+            throw new Error("no such user, please create a new user");
+        }
+        if (!user.isAssigned) {
+            deleteUser(req.query.id);
+        } else {
+            deleteDriver(req.query.id);
+            deleteUser(req.query.id);
+        }
+
+
+        res.status(200).send({ result: "user deleted" });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).send({ status: "Failed!", error: error.message });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`server up and running on PORT: ${PORT}`);

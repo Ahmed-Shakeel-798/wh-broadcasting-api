@@ -7,22 +7,7 @@ const { fetchUser, assignDriver } = require('../db');
 const openWhatsappWeb = async (id) => {
 
     let myPromise = new Promise(async (myResolve, myReject) => {
-        console.log(id);
-        const user = fetchUser(parseInt(id));
-        if (!user) {
-            const output = {
-                error: "user not found",
-                check: false
-            };
-            return myReject(output);
-        }
-        if (user.isAssigned == true) {
-            const output = {
-                error: "driver already exists",
-                check: false
-            };
-            return myReject(output);
-        }
+        const user = fetchUser(id);
         const driver = new webdriver.Builder().forBrowser('chrome').build();
         assignDriver(user.id, driver);
 
