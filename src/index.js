@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-const filePath = path.join(__dirname, '/sc.png');
+
 var driver;
 
 // craetes a new user id & return it
@@ -47,11 +47,12 @@ app.get('/initialize', async (req, res) => {
             (outputObj) => {
                 driverId = outputObj.driverId;
                 driver = outputObj.driver;
-                fs.writeFileSync('./src/sc.png', outputObj.output, 'base64');
+                fs.writeFileSync(`./src/${driverId}.png`, outputObj.output, 'base64');
+                const filePath = path.join(__dirname, `/${driverId}.png`);
                 res.set("id", `${driverId}`);
                 res.sendFile(filePath);
                 setTimeout(async () => {
-                    fs.unlink('./src/sc.png', (err) => {
+                    fs.unlink(`./src/${driverId}.png`, (err) => {
                         if (err) {
                             throw err;
                         }
