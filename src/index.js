@@ -110,7 +110,7 @@ app.post('/sendMessageTextOnly/:id', async (req, res) => {
 
         await sendMessageByNumber(req.body.contact, req.body.text, driver).then((output) => {
             if (output.check) {
-                res.send({ output: output });
+                res.send({ status: "Success", sent_to: output.contact, text: output.text });
                 check = output.check;
                 // driver.navigate().refresh();
             }
