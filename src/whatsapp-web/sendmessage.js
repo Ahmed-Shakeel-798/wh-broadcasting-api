@@ -1,5 +1,7 @@
 var webdriver = require("selenium-webdriver");
 const fs = require("fs");
+const { checkStatus } = require('./check_status');
+
 
 const { fetchUser } = require('../db');
 
@@ -10,6 +12,7 @@ const sendMessageByNumber = async (contact, text, driver) => {
     const By = webdriver.By;
     return new Promise(async (myResolve, myReject) => {
         await driver.get(`https://web.whatsapp.com/send?phone=${contact}&text=${text}&app_absent=0`);
+        var start = new Date().getTime();
         while (1) {
             try {
                 const sendButton = await driver.findElement(By.xpath(`//*[@id="main"]/footer/div[1]/div[3]/button`));
@@ -22,12 +25,40 @@ const sendMessageByNumber = async (contact, text, driver) => {
                 myResolve(output);
                 break;
             } catch (error) {
+                var end = new Date().getTime();
+                var time = end - start;
+                if (time >= 10000 && time <= 12000) {
+                    let should_break = false;
+                    await checkStatus(driver).then((result) => {
+                        if (!result.isActive) {
+                            const output = {
+                                message: "Your whatsapp web is not connected. Please check your phone's internet connection",
+                                check: false
+                            };
+                            myReject(output);
+                            should_break = true;
+                        }
+                    });
+                    if (should_break) {
+                        break;
+                    }
+                }
+                if (time >= 28000) {
+                    console.log(time);
+                    const output = {
+                        message: "Can't send message, connectivity issues.",
+                        check: false
+                    };
+                    myReject(output);
+                    break;
+                }
             }
             try {
                 const sendButton = await driver.findElement(By.xpath(`//*[@id="app"]/div[1]/span[2]/div[1]/span/div[1]/div/div/div/div/div[2]/div`));
                 await sendButton.click();
                 const output = {
                     message: "number not valid",
+                    check: false
                 };
                 myReject(output);
                 break;
@@ -37,62 +68,6 @@ const sendMessageByNumber = async (contact, text, driver) => {
     });
 }
 
-// const sendMessageByNumber = async (contact, text, id) => {
-//     const user = fetchUser(id);
-//     let driver = user.driver;
-//     const By = webdriver.By;
-//     return new Promise(async (myResolve, myResponse) => {
-//         try {
-//             //TODO: make changes here
-//             //await driver.get('https://wa.me/923333031794/?text=..%20..');
-//             const searchContact = await driver.findElement(By.xpath('//*[@id="side"]/div[1]/div/label/div/div[2]'));
-//             await searchContact.sendKeys(`${contact}\n`).then(
-//                 async () => {
-//                     const message_box = (await driver).findElement(By.xpath('//*[@id="main"]/footer/div[1]/div[2]/div/div[2]'));
-//                     await message_box.sendKeys(`${text}`).then(
-//                         async () => {
-//                             const sendButton = (await driver).findElement(By.xpath('//*[@id="main"]/footer/div[1]/div[3]/button'));
-
-//                             (await sendButton).click().then(
-//                                 async () => {
-//                                     //console.log("here");
-//                                     setTimeout(async () => {
-//                                         const myMessage = await driver.findElement(By.xpath('//*[@class="GDTQm message-out focusable-list-item"]/div/div/div/div[2]/div/div/span'));
-//                                         const dataIcon = await myMessage.getAttribute("data-icon");
-//                                         const ariaLabel = await myMessage.getAttribute("aria-label");
-//                                         var status;
-//                                         if (dataIcon == "msg-check") {
-//                                             status = "Sent"
-//                                         } else if (dataIcon == "msg-dblcheck") {
-//                                             status = "Delivered"
-//                                         }
-//                                         const output = {
-//                                             message: text,
-//                                             status,
-//                                             //dataIcon,
-//                                             //ariaLabel,
-//                                             check: true,
-//                                         }
-//                                         myResolve(output);
-//                                     }, 1000);
-//                                 }
-//                             );
-//                         }
-//                     )
-//                     //myResolve(10);
-//                 }
-//             );
-//         } catch (error) {
-//             //console.log(error);
-//             const output = {
-//                 error: error,
-//                 check: false
-//             };
-//             myResolve(output);
-//         }
-
-//     })
-// }
 
 
 
