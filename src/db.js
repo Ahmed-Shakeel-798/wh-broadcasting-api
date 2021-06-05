@@ -3,12 +3,17 @@ class User {
     constructor(id) {
         this.id = id;
         this.isAssigned = false;
+        this.hasScanned = false;
     }
 
     assignDriver(driver) {
         this.driver = driver;
         this.isAssigned = true;
     };
+
+    assignScannedStatus(status) {
+        this.hasScanned = status;
+    }
 
     deleteDriver() {
         this.driver.close();
@@ -86,8 +91,16 @@ let assignDriver = (id, driver) => {
     }
 }
 
-let deleteDriver = (id) => {
+let toggleQrScannedStatus = (id, status) => {
+    for (let i = 0; i < users.length; i++) {
+        if (users[i].getId() == id) {
+            users[i].assignScannedStatus(status);
+        }
+    }
+}
 
+
+let deleteDriver = (id) => {
     const user = fetchUser(id);
     if (!user) {
         throw new Error("user not found, please create a new user");
@@ -140,6 +153,7 @@ module.exports = {
     getAllUsers,
     fetchUser,
     assignDriver,
+    toggleQrScannedStatus,
     deleteDriver,
     deleteUser,
 }

@@ -12,6 +12,7 @@ const openWhatsappWeb = async (id) => {
             const driver = new webdriver.Builder().forBrowser('chrome').build();
             assignDriver(user.id, driver);
 
+            // //*[@id="app"]/div[1]/div/div[2]/div[1]/div/div[2]/div
             await driver.get('https://web.whatsapp.com/');
             // wait for page to load completely
             await driver.wait(async function () {
